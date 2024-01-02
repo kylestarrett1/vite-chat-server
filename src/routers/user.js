@@ -3,7 +3,6 @@ const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth');
 const router = new express.Router();
-const Task = require('../models/task');
 
 router.post('/signup', async (req, res) => {
   const user = new User(req.body);
@@ -12,6 +11,7 @@ router.post('/signup', async (req, res) => {
     await user.save();
 
     res.status(201);
+    console.log('Successfully created user: ', user._id);
   } catch (error) {
     res.status(400).send(error);
   }
@@ -55,16 +55,6 @@ router.post('/users/logout', auth, async (req, res) => {
 
     await req.user.save();
 
-    res.send();
-  } catch (error) {
-    res.status(500).send();
-  }
-});
-
-router.post('/users/logoutAll', auth, async (req, res) => {
-  try {
-    req.user.tokens = [];
-    await req.user.save();
     res.send();
   } catch (error) {
     res.status(500).send();
