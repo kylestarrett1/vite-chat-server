@@ -8,25 +8,15 @@ router.post('/signup', async (req, res) => {
   const user = new User(req.body);
 
   try {
-    await user.save();
-
-    res.status(201);
-    console.log('Successfully created user: ', user._id);
+    if (!user.confirmed) {
+      await user.generateAuthToken();
+      user.confirmed = true;
+      await user.save();
+      res.status(201);
+      console.log(user.username + ' created successfully...');
+    }
   } catch (error) {
     res.status(400).send(error);
-  }
-});
-
-router.get('/confirmation/:token', async (req, res) => {
-  try {
-    const payload = jwt.verify(req.params.token, process.env.EMAIL_SECRET);
-    const _id = payload._id;
-    await User.findByIdAndUpdate(_id, { confirmed: true });
-
-    res.redirect('http://localhost:3000/login');
-  } catch (error) {
-    console.log(error);
-    res.send('error');
   }
 });
 
@@ -36,15 +26,23 @@ router.post('/login', async (req, res) => {
       req.body.email,
       req.body.password
     );
-    res.send('Dashboard');
+    res.status(200);
+    // res.send('Dashboard');
     console.log(`${req.body.email} successfully logged in...`);
   } catch (error) {
     res.status(400).send();
   }
 });
 
-router.get('/login', (req, res) => {
-  res.render('login', {});
+router.get('/confirmation/:token', async (req, res) => {
+  try {
+    const payload = jwt.verify(req.params.token);
+    const _id = payload._id;
+    await User.findByIdAndUpdate(_id, { confirmed: true });
+  } catch (error) {
+    console.log(error);
+    res.send('error');
+  }
 });
 
 router.post('/users/logout', auth, async (req, res) => {
@@ -55,6 +53,16 @@ router.post('/users/logout', auth, async (req, res) => {
 
     await req.user.save();
 
+    res.send();
+  } catch (error) {
+    res.status(500).send();
+  }
+});
+
+router.post('/users/logoutAll', auth, async (req, res) => {
+  try {
+    req.user.tokens = [];
+    await req.user.save();
     res.send();
   } catch (error) {
     res.status(500).send();
