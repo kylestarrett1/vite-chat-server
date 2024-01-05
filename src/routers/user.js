@@ -26,7 +26,7 @@ router.post('/login', async (req, res) => {
       req.body.email,
       req.body.password
     );
-    res.status(200);
+    res.status(200).send();
     // res.send('Dashboard');
     console.log(`${req.body.email} successfully logged in...`);
   } catch (error) {
